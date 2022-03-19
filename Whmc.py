@@ -1,0 +1,111 @@
+from twocaptcha import TwoCaptcha
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+import time
+import json
+from bs4 import BeautifulSoup
+
+class WhmcScrapper():
+    URL = "https://thenexthosting.com/thenextadmin/index.php"
+    username = "shelly@1809"
+    password = "Wicked1218!$"
+    solver = TwoCaptcha('f1da75b0f03fe3d497490281643d241d')
+
+    def initialize(self):
+        chrome_options = Options()
+        chrome_options.add_argument('log-level=3')
+        # chrome_options.add_argument("--headless")
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver.implicitly_wait(10)
+        self.driver.get(self.URL)
+        self.login()
+
+    def page_has_loaded(self):
+        page_state = self.driver.execute_script('return document.readyState;')
+        if page_state == 'complete':
+            self.main_log.info("Page Loaded")
+        else:
+            time.sleep(1)
+            self.page_has_loaded()
+
+    def fill_captcha(self):
+        result = self.solver.normal('image.png')
+        captcha_input = self.driver.find_element_by_id('inputCaptcha')
+        code = result.get('code')
+        self.main_log.info(f"Captcha found {code}")
+        captcha_input.send_keys(code.upper())
+
+    def login(self):
+        self.driver.find_element_by_id('inputCaptchaImage').screenshot('image.png')
+        username = self.driver.find_element_by_xpath('//input[@name="username"]')
+        password = self.driver.find_element_by_xpath('//input[@name="password"]')
+        self.fill_captcha()
+        username.send_keys(self.username)
+        password.send_keys(self.password)
+        button = self.driver.find_element_by_xpath('//input[@value="Login"]')
+        self.driver.execute_script("arguments[0].click()", button)
+        try:
+            self.driver.find_element_by_xpath('//a[@href="/thenextadmin/orders.php?status=Pending"]')
+        except:
+            self.main_log.exception("Logged In Error", exc_info=True)
+            self.login()
+
+    @staticmethod
+    def validate(each):
+        pass
+
+    def add_payment(self,service):
+        try:
+            self.initialize()
+        except:
+            self.main_log.exception("Intialization Error", exc_info=True)
+            raise Exception("Intialization error")
+        self.main_log.info("Payment adding started")
+        print(len(self.scrapped_email_results))
+        for each in self.scrapped_email_results:
+            print(each)
+            self.validate(each)
+            invoiceId = each["invoiceId"]
+            money = each["money"]
+            transaction_id = each["transaction_id"]
+            messageId = each["messageId"]
+            url = f"https://thenexthosting.com/thenextadmin/invoices.php?action=edit&id={invoiceId}#tab=2"
+            self.driver.get(url)
+            soup = BeautifulSoup(self.driver.page_source,'html.parser')
+            error = soup.find("p",text="Error: Invalid invoice id provided")
+            if not error:
+                ne = False
+                trans_ele = self.driver.find_element_by_name("transid")
+                money_ele = self.driver.find_element_by_name("fees")
+                amount_text = self.driver.find_element_by_name("amount").text
+                if amount_text:
+                    try:
+                        amount = int(amount_text)
+                        print(amount,money)
+                        if amount != money:
+                            ne = True
+                            params = self.get_params()
+                            service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                    except Exception as e:
+                        print(e)
+
+                trans_ele.clear()
+                money_ele.clear()
+                trans_ele.send_keys(transaction_id)
+                money_ele.send_keys(money)
+                button = self.driver.find_element_by_id("paymentText")
+                self.driver.execute_script("arguments[0].click()",button)
+                success = self.driver.find_elements_by_class_name("textred")
+                print(success,ne)
+                if success and not ne:
+                    self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                    self.report.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                    params = self.UNREAD_PARAMS
+                    service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+
+            else:
+                self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                params = self.get_params()
+                service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+
+        self.driver.quit()
