@@ -109,7 +109,7 @@ class Extractor(WhmcScrapper):
 
         if self.cash_app_emails:
             self.main_log.info("Scrapping and filtering cash app email")
-            for each in self.cash_app_emails[:3]:
+            for each in self.cash_app_emails:
                 try:
                     id = each["id"]
                     msg = service.users().messages().get(userId='me', id=id, format='full').execute()
