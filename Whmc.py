@@ -64,49 +64,50 @@ class WhmcScrapper():
         print(len(self.scrapped_email_results))
         for each in self.scrapped_email_results:
             print(each)
-            self.validate(each)
-            invoiceId = each["invoiceId"]
-            money = each["money"]
-            transaction_id = each["transaction_id"]
-            messageId = each["messageId"]
-            url = f"https://thenexthosting.com/thenextadmin/invoices.php?action=edit&id={invoiceId}#tab=2"
-            self.driver.get(url)
-            soup = BeautifulSoup(self.driver.page_source,'html.parser')
-            error = soup.find("p",text="Error: Invalid invoice id provided")
-            if not error:
-                ne = False
-                trans_ele = self.driver.find_element_by_name("transid")
-                money_ele = self.driver.find_element_by_name("fees")
-                amount_text = self.driver.find_element_by_name("amount").text
-                if amount_text:
-                    try:
-                        amount = int(amount_text)
-                        print(amount,money)
-                        if amount != money:
-                            ne = True
-                            params = self.get_params()
-                            service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-                    except Exception as e:
-                        print(e)
+            try:
+                invoiceId = each["invoiceId"]
+                money = each["money"]
+                transaction_id = each["transaction_id"]
+                messageId = each["messageId"]
+                url = f"https://thenexthosting.com/thenextadmin/invoices.php?action=edit&id={invoiceId}#tab=2"
+                self.driver.get(url)
+                soup = BeautifulSoup(self.driver.page_source,'html.parser')
+                error = soup.find("p",text="Error: Invalid invoice id provided")
+                if not error:
+                    ne = False
+                    trans_ele = self.driver.find_element_by_name("transid")
+                    money_ele = self.driver.find_element_by_name("fees")
+                    amount_text = self.driver.find_element_by_name("amount").text
+                    if amount_text:
+                        try:
+                            amount = int(amount_text)
+                            print(amount,money)
+                            if amount != money:
+                                ne = True
+                                params = self.get_params()
+                                service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                        except Exception as e:
+                            print(e)
 
-                trans_ele.clear()
-                money_ele.clear()
-                trans_ele.send_keys(transaction_id)
-                money_ele.send_keys(money)
-                button = self.driver.find_element_by_id("paymentText")
-                self.driver.execute_script("arguments[0].click()",button)
-                success = self.driver.find_elements_by_class_name("textred")
-                print(success,ne)
-                if success and not ne:
-                    self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
-                    self.report.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
-                    params = self.UNREAD_PARAMS
+                    trans_ele.clear()
+                    money_ele.clear()
+                    trans_ele.send_keys(transaction_id)
+                    money_ele.send_keys(money)
+                    button = self.driver.find_element_by_id("paymentText")
+                    self.driver.execute_script("arguments[0].click()",button)
+                    success = self.driver.find_elements_by_class_name("textred")
+                    print(success,ne)
+                    if success and not ne:
+                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                        self.report.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                        params = self.UNREAD_PARAMS
+                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+
+                else:
+                    self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                    params = self.get_params()
                     service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-
-            else:
-                self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
-                params = self.get_params()
-                service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-
+            except Exception as e:
+                print(e)
         self.driver.quit()
         self.main_log.info("driver closed task completed")
