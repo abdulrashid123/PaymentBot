@@ -109,3 +109,4 @@ class WhmcScrapper():
                 service.users().messages().modify(userId='me', id=messageId, body=params).execute()
 
         self.driver.quit()
+        self.main_log.info("driver closed task completed")
