@@ -96,6 +96,7 @@ class WhmcScrapper():
                     button = self.driver.find_element_by_id("paymentText")
                     self.driver.execute_script("arguments[0].click()",button)
                     success = self.driver.find_elements_by_class_name("textred")
+                    time.sleep(3)
                     print(success,ne)
                     if success and not ne:
                         self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
@@ -109,5 +110,6 @@ class WhmcScrapper():
                     service.users().messages().modify(userId='me', id=messageId, body=params).execute()
             except Exception as e:
                 print(e)
-        self.driver.quit()
+        if self.driver:
+            self.driver.quit()
         self.main_log.info("driver closed task completed")
