@@ -76,7 +76,8 @@ class WhmcScrapper():
                 if not error:
                     ne = False
                     trans_ele = self.driver.find_element_by_name("transid")
-                    money_ele = self.driver.find_element_by_name("fees")
+                    money_ele = self.driver.find_element_by_name("amount")
+                    money_ele.clear()
                     amount_text = self.driver.find_element_by_name("amount").text
                     if amount_text:
                         try:
