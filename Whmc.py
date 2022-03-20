@@ -73,11 +73,11 @@ class WhmcScrapper():
                 self.driver.get(url)
                 soup = BeautifulSoup(self.driver.page_source,'html.parser')
                 error = soup.find("p",text="Error: Invalid invoice id provided")
-                if not error:
+                invoice_paid = soup.find("span",text="Invoice in Paid Status")
+                if not error or invoice_paid:
                     ne = False
                     trans_ele = self.driver.find_element_by_name("transid")
                     money_ele = self.driver.find_element_by_name("amount")
-                    money_ele.clear()
                     amount_text = self.driver.find_element_by_name("amount").text
                     if amount_text:
                         try:
