@@ -52,7 +52,7 @@ class Extractor(WhmcScrapper):
         cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
                                         labelIds=['UNREAD']).execute()
         self.cash_app_emails = cash_app_emails.get("messages",[])
-        self.main_log.info(f"cash app email count {len(cash_app_emails['messages'])}")
+        self.main_log.info(f"cash app email count {len(cash_app_emails.get('messages',[]))}")
         self.main_log.info("fetching google pay emails unread")
         google_pay_emails = service.users().messages().list(userId="me", q="in:inbox from:googlepay-noreply@google.com",
                                         maxResults=1000000,labelIds=['UNREAD']).execute()
