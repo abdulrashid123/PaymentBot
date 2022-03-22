@@ -7,6 +7,8 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 import re
 from bs4 import BeautifulSoup
 from Whmc import WhmcScrapper
+import re
+
 
 class Extractor(WhmcScrapper):
     SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
@@ -18,6 +20,7 @@ class Extractor(WhmcScrapper):
         self.google_pay_emails = []
         self.cash_app_emails =[]
         self.scrapped_email_results = []
+        self.zelle_emails = []
 
     @classmethod
     def loginEmail(cls):
@@ -48,18 +51,65 @@ class Extractor(WhmcScrapper):
         return params
 
     def get_all_email(self,service):
-        self.main_log.info("fetching cash app emails unread")
-        cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
-                                        labelIds=['UNREAD']).execute()
-        self.cash_app_emails = cash_app_emails.get("messages",[])
-        self.main_log.info(f"cash app email count {len(cash_app_emails.get('messages',[]))}")
-        self.main_log.info("fetching google pay emails unread")
-        google_pay_emails = service.users().messages().list(userId="me", q="in:inbox from:googlepay-noreply@google.com",
-                                        maxResults=1000000,labelIds=['UNREAD']).execute()
-        self.main_log.info(f"google pay email count {len(google_pay_emails.get('messages',[]))}")
-        self.google_pay_emails = google_pay_emails.get("messages",[])
+        # self.main_log.info("fetching cash app emails unread")
+        # cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
+        #                                 labelIds=['UNREAD']).execute()
+        # self.cash_app_emails = cash_app_emails.get("messages",[])
+        # self.main_log.info(f"cash app email count {len(cash_app_emails.get('messages',[]))}")
+        # self.main_log.info("fetching google pay emails unread")
+        # google_pay_emails = service.users().messages().list(userId="me", q="in:inbox from:googlepay-noreply@google.com",
+        #                                 maxResults=1000000,labelIds=['UNREAD']).execute()
+        # self.main_log.info(f"google pay email count {len(google_pay_emails.get('messages',[]))}")
+        # self.google_pay_emails = google_pay_emails.get("messages",[])
+        self.main_log.info("fetching zelle emails unread")
+        zelle_emails = service.users().messages().list(userId="me", q="in:inbox from:customerservice@ealerts.bankofamerica.com",
+                                                            maxResults=1000000, labelIds=['UNREAD']).execute()
+        self.main_log.info(f"zelle email count {len(zelle_emails.get('messages', []))}")
+        self.zelle_emails = zelle_emails.get("messages", [])
 
     def filter_email(self,service):
+        if self.zelle_emails:
+            self.main_log.info("Scrapping and filtering zelle email")
+            for each in self.zelle_emails:
+                received = False
+                money = None
+                try:
+                    id = each["id"]
+                    msg = service.users().messages().get(userId='me', id=id, format='full').execute()
+                    payload = msg['payload']
+                    headers = payload.get("headers")
+                    for h in headers:
+                        if h["name"].lower() == "subject":
+                            print(h)
+                            if "sent you" in h["value"]:
+                                received = True
+                                money = re.findall(r'\d+\.\d+', h["value"])
+                                if money:
+                                    try:
+                                        money = float(money[0])
+                                    except:
+                                        money = None
+                                else:
+                                    money = None
+                    body = payload.get("body")
+                    data = body.get("data")
+                    text = urlsafe_b64decode(data).decode()
+                    soup = BeautifulSoup(text, 'html.parser')
+
+                    invoice_id = soup.find("td", text=re.compile("2012"))
+                    if received and invoice_id and money:
+                        invoice_id = invoice_id.get_text(strip=True)
+                        email_detail = {"messageId":id,"received":True,"invoiceId":invoice_id,"money":money}
+                        self.scrapped_email_results.append(email_detail)
+                    else:
+                        print("not valid moved to unable to find")
+                        params = self.get_params()
+                        service.users().messages().modify(userId='me', id=id,body=params).execute()
+                except Exception as e:
+                    print("here")
+                    print(e)
+        else:
+            self.main_log.info("No emails found for google pay")
         if self.google_pay_emails:
             self.main_log.info("Scrapping and filtering google pay email")
             for each in self.google_pay_emails:

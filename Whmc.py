@@ -14,7 +14,7 @@ class WhmcScrapper():
     def initialize(self):
         chrome_options = Options()
         chrome_options.add_argument('log-level=3')
-        chrome_options.add_argument("--headless")
+        # chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.implicitly_wait(10)
         self.driver.get(self.URL)
@@ -67,7 +67,7 @@ class WhmcScrapper():
             try:
                 invoiceId = each["invoiceId"]
                 money = each["money"]
-                transaction_id = each["transaction_id"]
+                transaction_id = each.get("transaction_id",None)
                 messageId = each["messageId"]
                 url = f"https://thenexthosting.com/thenextadmin/invoices.php?action=edit&id={invoiceId}#tab=2"
                 self.driver.get(url)
@@ -92,7 +92,8 @@ class WhmcScrapper():
 
                     trans_ele.clear()
                     money_ele.clear()
-                    trans_ele.send_keys(transaction_id)
+                    if transaction_id:
+                        trans_ele.send_keys(transaction_id)
                     money_ele.send_keys(money)
                     button = self.driver.find_element_by_id("paymentText")
                     self.driver.execute_script("arguments[0].click()",button)
