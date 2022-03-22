@@ -14,7 +14,7 @@ class WhmcScrapper():
     def initialize(self):
         chrome_options = Options()
         chrome_options.add_argument('log-level=3')
-        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.implicitly_wait(10)
         self.driver.get(self.URL)
