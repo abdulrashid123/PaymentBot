@@ -109,7 +109,7 @@ class Extractor(WhmcScrapper):
                     print("here")
                     print(e)
         else:
-            self.main_log.info("No emails found for google pay")
+            self.main_log.info("No emails found for zelle")
         if self.google_pay_emails:
             self.main_log.info("Scrapping and filtering google pay email")
             for each in self.google_pay_emails:
