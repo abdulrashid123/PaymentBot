@@ -97,8 +97,12 @@ class Extractor(WhmcScrapper):
                     soup = BeautifulSoup(text, 'html.parser')
 
                     invoice_id = soup.find("td", text=re.compile("2012"))
+                    if invoice_id:
+                        try:
+                            invoice_id = re.findall(r'\d+', invoice_id.get_text(strip=True))[0]
+                        except Exception as e:
+                            print(e)
                     if received and invoice_id and money:
-                        invoice_id = invoice_id.get_text(strip=True)
                         email_detail = {"messageId":id,"received":True,"invoiceId":invoice_id,"money":money}
                         self.scrapped_email_results.append(email_detail)
                     else:
@@ -210,6 +214,7 @@ class Extractor(WhmcScrapper):
                 service = build('gmail', 'v1', credentials=creds)
                 self.get_all_email(service)
                 self.filter_email(service)
+                print(self.scrapped_email_results)
                 if self.scrapped_email_results:
                     self.add_payment(service)
                 else:
