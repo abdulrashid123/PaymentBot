@@ -81,9 +81,9 @@ class WhmcScrapper():
                     amount_text = self.driver.find_element_by_name("amount").text
                     if amount_text:
                         try:
-                            amount = int(amount_text)
+                            amount = float(amount_text)
                             print(amount,money)
-                            if amount != money:
+                            if amount != float(money):
                                 ne = True
                                 params = self.get_params()
                                 service.users().messages().modify(userId='me', id=messageId, body=params).execute()
