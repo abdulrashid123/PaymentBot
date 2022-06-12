@@ -180,6 +180,8 @@ class Extractor(WhmcScrapper):
                             text = urlsafe_b64decode(data).decode()
                             soup = BeautifulSoup(text, 'html.parser')
                             received = soup.find("div", text=re.compile("Received"))
+                            if not received:
+                                received = soup.find("div", text=re.compile("Cash Available"))
                             invoice_id = soup.find("div", text=re.compile("2012"))
                             transaction_id = soup.find("div", text=re.compile("Identifier"))
                             money = soup.findAll("span", text=re.compile("$"))
