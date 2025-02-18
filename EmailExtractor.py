@@ -4,7 +4,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os.path
 from base64 import urlsafe_b64decode, urlsafe_b64encode
-import re
+from google.oauth2.credentials import Credentials
 from bs4 import BeautifulSoup
 from Whmc import WhmcScrapper
 import re
@@ -21,6 +21,8 @@ class Extractor(WhmcScrapper):
         self.cash_app_emails =[]
         self.scrapped_email_results = []
         self.zelle_emails = []
+        self.venmo_email = []
+        self.helcim_email = []
 
     @classmethod
     def loginEmail(cls):
@@ -30,6 +32,7 @@ class Extractor(WhmcScrapper):
                 creds = pickle.load(token)
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
+                # creds = Credentials.from_authorized_user_file("credentials.json")
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file('credentials.json', cls.SCOPES)
@@ -51,6 +54,17 @@ class Extractor(WhmcScrapper):
         return params
 
     def get_all_email(self,service):
+        self.main_log.info("fetching helcim emails unread")
+        helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
+                                                      maxResults=1000000,labelIds=['UNREAD']
+                                                      ).execute()
+        self.helcim_email = helcim_email.get("messages", [])
+        self.main_log.info("fetching venmo emails unread")
+        venmo_email = service.users().messages().list(userId="me", q="in:inbox from:venmo@venmo.com",
+                                                          maxResults=1000000,labelIds=['UNREAD']
+                                                          ).execute()
+        self.venmo_email = venmo_email.get("messages", [])
+
         self.main_log.info("fetching cash app emails unread")
         cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
                                         labelIds=['UNREAD']).execute()
@@ -68,6 +82,102 @@ class Extractor(WhmcScrapper):
         self.zelle_emails = zelle_emails.get("messages", [])
 
     def filter_email(self,service):
+        if self.helcim_email:
+            self.main_log.info("Scrapping and filtering Helcim email")
+            for each in self.helcim_email:
+                received = False
+                try:
+                    id = each["id"]
+                    msg = service.users().messages().get(userId='me', id=id, format='full').execute()
+                    payload = msg['payload']
+                    headers = payload.get("headers")
+                    for h in headers:
+                        if h["name"].lower() == "subject":
+                            print(h)
+                            if "APPROVED" in h["value"]:
+                                received = True
+                                break
+                    body = payload.get("body")
+                    data = body.get("data")
+                    text = urlsafe_b64decode(data).decode()
+                    soup = BeautifulSoup(text, 'html.parser')
+                    invoice_no = None
+                    transaction_id = None
+                    invoice_id_label = soup.find('td', text=re.compile(r'Invoice ID'))
+                    sibling = invoice_id_label.find_next_sibling()
+                    if sibling:
+                        invoice_no = sibling.text
+                    transaction_id_label = soup.find('td', text=re.compile(r'Transaction ID'))
+                    sibling = transaction_id_label.find_next_sibling()
+                    if sibling:
+                        transaction_id = sibling.text
+                    money = None
+                    money_html = soup.find("div", text=re.compile("$"))
+                    if money_html:
+                        money = money_html.get_text(strip=True).replace("$","").strip()
+                    if received and invoice_no and transaction_id and money:
+
+                        email_detail = {"messageId": id, "received": True, "invoiceId": invoice_no,
+                                        "transaction_id": transaction_id, "money": money}
+                        self.scrapped_email_results.append(email_detail)
+                    else:
+                        print("not valid moved to unable to find")
+                        params = self.get_params()
+                        service.users().messages().modify(userId='me', id=id, body=params).execute()
+                except Exception as e:
+                    print("here")
+                    print(e)
+        else:
+            self.main_log.info("No emails found for google pay")
+        if self.venmo_email:
+            self.main_log.info("Scrapping and filtering venmo email")
+            for each in self.venmo_email:
+
+                try:
+                    id = each["id"]
+                    msg = service.users().messages().get(userId='me', id=id, format='full').execute()
+                    payload = msg['payload']
+                    headers = payload.get("headers")
+                    received = True
+                    parts = payload.get("parts")
+                    for part in parts:
+                        if part["mimeType"] == "text/html":
+                            body = part.get("body")
+                            data = body.get("data")
+                            text = urlsafe_b64decode(data).decode()
+                            soup = BeautifulSoup(text, 'html.parser')
+                            invoice_no = None
+                            invoice_id = soup.find('p', text=re.compile(r'Invoice\s+#?\d+'))
+                            if invoice_id:
+                                # Extract only the number using regex
+                                invoice_number = re.search(r'\d+', invoice_id.text).group()
+                                invoice_no = invoice_number.replace("#","")
+                            h3_element = soup.find('h3', text=re.compile(r'Transaction ID', re.I))
+                            transaction_id = None
+                            if h3_element:
+                                sibling = h3_element.find_next_sibling()
+                                if sibling:
+                                    transaction_id = sibling.text
+                            money_html = soup.find('div', text=re.compile(r'$'))
+                            money = None
+                            if money_html:
+                                sibling = money_html.find_next_sibling()
+                                if sibling:
+                                    money = sibling.text
+                            if received and invoice_no and transaction_id and money:
+
+                                email_detail = {"messageId": id, "received": True, "invoiceId": invoice_no,
+                                                "transaction_id": transaction_id, "money": money}
+                                self.scrapped_email_results.append(email_detail)
+                            else:
+                                print("not valid moved to unable to find")
+                                params = self.get_params()
+                                service.users().messages().modify(userId='me', id=id, body=params).execute()
+                except Exception as e:
+                    print("here")
+                    print(e)
+        else:
+            self.main_log.info("No emails found for venmo")
         if self.zelle_emails:
             self.main_log.info("Scrapping and filtering zelle email")
             for each in self.zelle_emails:
