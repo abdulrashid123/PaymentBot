@@ -4,7 +4,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os.path
 from base64 import urlsafe_b64decode, urlsafe_b64encode
-from google.oauth2.credentials import Credentials
+import traceback
 from bs4 import BeautifulSoup
 from Whmc import WhmcScrapper
 import re
@@ -125,6 +125,7 @@ class Extractor(WhmcScrapper):
                         params = self.get_params()
                         service.users().messages().modify(userId='me', id=id, body=params).execute()
                 except Exception as e:
+                    traceback.print_exc()
                     print("here")
                     print(e)
         else:
@@ -174,6 +175,7 @@ class Extractor(WhmcScrapper):
                                 params = self.get_params()
                                 service.users().messages().modify(userId='me', id=id, body=params).execute()
                 except Exception as e:
+                    traceback.print_exc()
                     print("here")
                     print(e)
         else:
@@ -211,6 +213,7 @@ class Extractor(WhmcScrapper):
                         try:
                             invoice_id = re.findall(r'\d+', invoice_id.get_text(strip=True))[0]
                         except Exception as e:
+                            traceback.print_exc()
                             print(e)
                     if received and invoice_id and money:
                         email_detail = {"messageId":id,"received":True,"invoiceId":invoice_id,"money":money}
@@ -220,6 +223,7 @@ class Extractor(WhmcScrapper):
                         params = self.get_params()
                         service.users().messages().modify(userId='me', id=id,body=params).execute()
                 except Exception as e:
+                    traceback.print_exc()
                     print("here")
                     print(e)
         else:
@@ -266,6 +270,7 @@ class Extractor(WhmcScrapper):
                                 params = self.get_params()
                                 service.users().messages().modify(userId='me', id=id,body=params).execute()
                 except Exception as e:
+                    traceback.print_exc()
                     print("here")
                     print(e)
         else:
@@ -312,6 +317,7 @@ class Extractor(WhmcScrapper):
                                 params = self.get_params()
                                 service.users().messages().modify(userId='me', id=id,body=params).execute()
                 except Exception as e:
+                    traceback.print_exc()
                     print(e)
         else:
             self.main_log.info("No emails found for cash app")
@@ -332,6 +338,7 @@ class Extractor(WhmcScrapper):
                 else:
                     self.main_log.info("No emails found to add payment")
             except Exception as e:
+                traceback.print_exc()
                 print(e)
         else:
             self.main_log.error("Not able to log in")
