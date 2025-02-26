@@ -10,7 +10,7 @@ class WhmcScrapper():
     URL = "https://thenexthosting.com/thenextadmin/index.php"
     username = "shelly@1809"
     password = "Wicked1218!$"
-    solver = TwoCaptcha('f1da75b0f03fe3d497490281643d241d')
+    solver = TwoCaptcha('05273152359ea160d6fa301343e432c5')
 
     def initialize(self):
         service = Service(ChromeDriverManager().install())
