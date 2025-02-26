@@ -2,7 +2,8 @@ from twocaptcha import TwoCaptcha
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 import time
-import json
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 
 class WhmcScrapper():
@@ -12,10 +13,11 @@ class WhmcScrapper():
     solver = TwoCaptcha('f1da75b0f03fe3d497490281643d241d')
 
     def initialize(self):
+        service = Service(ChromeDriverManager().install())
         chrome_options = Options()
         chrome_options.add_argument('log-level=3')
         chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options,service=service)
         self.driver.implicitly_wait(10)
         self.driver.get(self.URL)
         self.login()
