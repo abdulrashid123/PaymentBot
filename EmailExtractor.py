@@ -60,7 +60,7 @@ class Extractor(WhmcScrapper):
                                                       ).execute()
         self.helcim_email = helcim_email.get("messages", [])
         self.main_log.info("fetching venmo emails unread")
-        venmo_email = service.users().messages().list(userId="me", q="in:inbox from:venmo@venmo.com",
+        venmo_email = service.users().messages().list(userId="me", q="from:venmo@venmo.com",
                                                           maxResults=1000000,labelIds=['UNREAD']
                                                           ).execute()
         self.venmo_email = venmo_email.get("messages", [])
