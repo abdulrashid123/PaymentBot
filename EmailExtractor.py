@@ -55,16 +55,16 @@ class Extractor(WhmcScrapper):
 
     def get_all_email(self,service):
         self.main_log.info("fetching helcim emails unread")
-        helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
-                                                      maxResults=1000000,labelIds=['UNREAD']
-                                                      ).execute()
-        self.helcim_email = helcim_email.get("messages", [])
+        # helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
+        #                                               maxResults=1000000,labelIds=['UNREAD']
+        #                                               ).execute()
+        # self.helcim_email = helcim_email.get("messages", [])
         self.main_log.info("fetching venmo emails unread")
         venmo_email = service.users().messages().list(userId="me", q="from:venmo@venmo.com",
                                                           maxResults=1000000,labelIds=['UNREAD']
                                                           ).execute()
         self.venmo_email = venmo_email.get("messages", [])
-
+        return
         self.main_log.info("fetching cash app emails unread")
         cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
                                         labelIds=['UNREAD']).execute()
@@ -148,7 +148,9 @@ class Extractor(WhmcScrapper):
                             text = urlsafe_b64decode(data).decode()
                             soup = BeautifulSoup(text, 'html.parser')
                             invoice_no = None
-                            invoice_id = soup.find('p', text=re.compile(r'Invoice\s+#?\d+'))
+                            pattern = re.compile(r'^(Invoice\s+#?\d+|\d+)$')
+
+                            invoice_id = soup.find('p', text=pattern)
                             if invoice_id:
                                 # Extract only the number using regex
                                 invoice_number = re.search(r'\d+', invoice_id.text).group()
@@ -161,6 +163,7 @@ class Extractor(WhmcScrapper):
                                     transaction_id = sibling.text
                             money_html = soup.find('div', text=re.compile(r'$'))
                             money = None
+
                             if money_html:
                                 sibling = money_html.find_next_sibling()
                                 if sibling:
