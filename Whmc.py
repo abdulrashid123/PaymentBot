@@ -5,18 +5,18 @@ import time
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-
+from selenium.webdriver.common.by import By
 class WhmcScrapper():
     URL = "https://thenexthosting.com/thenextadmin/index.php"
     username = "shelly@1809"
-    password = "Wicked1218!$"
+    password = "Shelly@qqzbofjj8SZg!$"
     solver = TwoCaptcha('05273152359ea160d6fa301343e432c5')
 
     def initialize(self):
         service = Service(ChromeDriverManager().install())
         chrome_options = Options()
         chrome_options.add_argument('log-level=3')
-        chrome_options.add_argument("--headless")
+        # chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome(options=chrome_options,service=service)
         self.driver.implicitly_wait(10)
         self.driver.get(self.URL)
@@ -38,7 +38,7 @@ class WhmcScrapper():
         captcha_input.send_keys(code.upper())
 
     def login(self):
-        self.driver.find_element_by_id('inputCaptchaImage').screenshot('image.png')
+        self.driver.find_element(By.ID, 'inputCaptchaImage').screenshot('image.png')
         username = self.driver.find_element_by_xpath('//input[@name="username"]')
         password = self.driver.find_element_by_xpath('//input[@name="password"]')
         self.fill_captcha()
