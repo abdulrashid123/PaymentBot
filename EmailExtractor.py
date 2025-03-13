@@ -55,10 +55,10 @@ class Extractor(WhmcScrapper):
 
     def get_all_email(self,service):
         self.main_log.info("fetching helcim emails unread")
-        # helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
-        #                                               maxResults=1000000,labelIds=['UNREAD']
-        #                                               ).execute()
-        # self.helcim_email = helcim_email.get("messages", [])
+        helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
+                                                      maxResults=1000000,labelIds=['UNREAD']
+                                                      ).execute()
+        self.helcim_email = helcim_email.get("messages", [])
         self.main_log.info("fetching venmo emails unread")
         venmo_email = service.users().messages().list(userId="me", q="from:venmo@venmo.com",
                                                           maxResults=1000000,labelIds=['UNREAD']
@@ -210,8 +210,8 @@ class Extractor(WhmcScrapper):
                     data = body.get("data")
                     text = urlsafe_b64decode(data).decode()
                     soup = BeautifulSoup(text, 'html.parser')
-
-                    invoice_id = soup.find("td", text=re.compile("2012"))
+                    pattern = re.compile(r"\d+")
+                    invoice_id = soup.find("td", text=pattern).findNext('td',text=pattern)
                     if invoice_id:
                         try:
                             invoice_id = re.findall(r'\d+', invoice_id.get_text(strip=True))[0]
