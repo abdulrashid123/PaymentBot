@@ -55,7 +55,7 @@ class Extractor(WhmcScrapper):
 
     def get_all_email(self,service):
         self.main_log.info("fetching helcim emails unread")
-        helcim_email = service.users().messages().list(userId="me", q="in:inbox from:donotreply@app.helcim.com",
+        helcim_email = service.users().messages().list(userId="me", q="from:donotreply@app.helcim.com",
                                                       maxResults=1000000,labelIds=['UNREAD']
                                                       ).execute()
         self.helcim_email = helcim_email.get("messages", [])
@@ -103,10 +103,11 @@ class Extractor(WhmcScrapper):
                     soup = BeautifulSoup(text, 'html.parser')
                     invoice_no = None
                     transaction_id = None
-                    invoice_id_label = soup.find('td', text=re.compile(r'Invoice ID'))
-                    sibling = invoice_id_label.find_next_sibling()
-                    if sibling:
-                        invoice_no = sibling.text
+                    pattern = re.compile("2014")
+                    invoice_id_label = soup.find('td', text=pattern)
+                    # sibling = invoice_id_label.find_next_sibling()
+                    if invoice_id_label:
+                        invoice_no = invoice_id_label.text.replace("#","")
                     transaction_id_label = soup.find('td', text=re.compile(r'Transaction ID'))
                     sibling = transaction_id_label.find_next_sibling()
                     if sibling:
@@ -129,7 +130,7 @@ class Extractor(WhmcScrapper):
                     print("here")
                     print(e)
         else:
-            self.main_log.info("No emails found for google pay")
+            self.main_log.info("No emails found for Helcim pay")
         if self.venmo_email:
             self.main_log.info("Scrapping and filtering venmo email")
             for each in self.venmo_email:
