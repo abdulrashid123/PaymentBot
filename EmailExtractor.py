@@ -148,7 +148,7 @@ class Extractor(WhmcScrapper):
                             text = urlsafe_b64decode(data).decode()
                             soup = BeautifulSoup(text, 'html.parser')
                             invoice_no = None
-                            pattern = re.compile(r'^(Invoice\s+#?\d+|\d+)$')
+                            pattern = re.compile("2014")
 
                             invoice_id = soup.find('p', text=pattern)
                             if invoice_id:
@@ -174,7 +174,7 @@ class Extractor(WhmcScrapper):
                                                 "transaction_id": transaction_id, "money": money}
                                 self.scrapped_email_results.append(email_detail)
                             else:
-                                print("not valid moved to unable to find")
+                                print(f"not valid moved to unable to find {received} and {invoice_no} , {transaction_id} ,{money}")
                                 params = self.get_params()
                                 service.users().messages().modify(userId='me', id=id, body=params).execute()
                 except Exception as e:
