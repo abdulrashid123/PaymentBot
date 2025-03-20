@@ -107,7 +107,8 @@ class Extractor(WhmcScrapper):
                     invoice_id_label = soup.find('td', text=pattern)
                     # sibling = invoice_id_label.find_next_sibling()
                     if invoice_id_label:
-                        invoice_no = invoice_id_label.text.replace("#","")
+                        invoice_number = re.search(r'\d+', invoice_id_label.text).group()
+                        invoice_no = invoice_number.replace("#","")
                     transaction_id_label = soup.find('td', text=re.compile(r'Transaction ID'))
                     sibling = transaction_id_label.find_next_sibling()
                     if sibling:
