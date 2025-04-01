@@ -107,7 +107,7 @@ class Extractor(WhmcScrapper):
                     invoice_id_label = soup.find('td', text=pattern)
                     # sibling = invoice_id_label.find_next_sibling()
                     if invoice_id_label:
-                        invoice_number = re.search(r'\d+', invoice_id_label.text).group()
+                        invoice_number = re.search(r'\b2014\d*\b', invoice_id_label.text).group()
                         invoice_no = invoice_number.replace("#","")
                     transaction_id_label = soup.find('td', text=re.compile(r'Transaction ID'))
                     sibling = transaction_id_label.find_next_sibling()
@@ -155,7 +155,7 @@ class Extractor(WhmcScrapper):
                             invoice_id = soup.find('p', text=pattern)
                             if invoice_id:
                                 # Extract only the number using regex
-                                invoice_number = re.search(r'\d+', invoice_id.text).group()
+                                invoice_number = re.search(r'\b2014\d*\b', invoice_id_label.text).group()
                                 invoice_no = invoice_number.replace("#","")
                             h3_element = soup.find('h3', text=re.compile(r'Transaction ID', re.I))
                             transaction_id = None
@@ -212,11 +212,12 @@ class Extractor(WhmcScrapper):
                     data = body.get("data")
                     text = urlsafe_b64decode(data).decode()
                     soup = BeautifulSoup(text, 'html.parser')
-                    pattern = re.compile(r"\d+")
+                    pattern = re.compile('\d+')
                     invoice_id = soup.find("td", text=pattern).findNext('td',text=pattern)
                     if invoice_id:
                         try:
-                            invoice_id = re.findall(r'\d+', invoice_id.get_text(strip=True))[0]
+                            invoice_id =  re.search(r'\b2014\d*\b', invoice_id.text).group()
+                            invoice_id = invoice_id.replace("#","")
                         except Exception as e:
                             traceback.print_exc()
                             print(e)
