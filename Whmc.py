@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 class WhmcScrapper():
     URL = "https://thenexthosting.com/thenextadmin/index.php"
-    username = "shelly@1809"
-    password = "Shelly@qqzbofjj8SZg!$"
+    username = "payment@1809"
+    password = "Pay@qqzbofjj8SZg!$"
     solver = TwoCaptcha('05273152359ea160d6fa301343e432c5')
 
     def initialize(self):
