@@ -303,7 +303,7 @@ class Extractor(WhmcScrapper):
                             received = soup.find("div", text=re.compile("Received"))
                             if not received:
                                 received = soup.find("div", text=re.compile("Cash Available"))
-                            invoice_id = soup.find("div", text=re.compile("2012"))
+                            invoice_id = soup.find("div", text=re.compile("2014"))
                             transaction_id = soup.find("div", text=re.compile("Identifier"))
                             money = soup.findAll("span", text=re.compile("$"))
 
