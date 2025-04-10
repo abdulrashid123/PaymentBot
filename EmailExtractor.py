@@ -155,7 +155,7 @@ class Extractor(WhmcScrapper):
                             invoice_id = soup.find('p', text=pattern)
                             if invoice_id:
                                 # Extract only the number using regex
-                                invoice_number = re.search(r'\b2014\d*\b', invoice_id_label.text).group()
+                                invoice_number = re.search(r'\b2014\d*\b', invoice_id.text).group()
                                 invoice_no = invoice_number.replace("#","")
                             h3_element = soup.find('h3', text=re.compile(r'Transaction ID', re.I))
                             transaction_id = None
