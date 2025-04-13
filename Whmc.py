@@ -109,9 +109,16 @@ class WhmcScrapper():
                         service.users().messages().modify(userId='me', id=messageId, body=params).execute()
 
                 else:
-                    self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
-                    params = self.get_params()
-                    service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                    if invoice_paid:
+                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                        self.report.info(f"Invoice already paid")
+                        params = self.UNREAD_PARAMS
+                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                    else:
+                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                        self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                        params = self.get_params()
+                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
             except Exception as e:
                 print(e)
         if self.driver:
