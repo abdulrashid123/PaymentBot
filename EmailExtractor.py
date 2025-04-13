@@ -61,27 +61,27 @@ class Extractor(WhmcScrapper):
                                                       maxResults=1000000,labelIds=['UNREAD']
                                                       ).execute()
         self.helcim_email = helcim_email.get("messages", [])
-        # self.main_log.info("fetching venmo emails unread")
-        # venmo_email = service.users().messages().list(userId="me", q="from:venmo@venmo.com",
-        #                                                   maxResults=1000000,labelIds=['UNREAD']
-        #                                                   ).execute()
-        # self.venmo_email = venmo_email.get("messages", [])
-        #
-        # self.main_log.info("fetching cash app emails unread")
-        # cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
-        #                                 labelIds=['UNREAD']).execute()
-        # self.cash_app_emails = cash_app_emails.get("messages",[])
-        # self.main_log.info(f"cash app email count {len(cash_app_emails.get('messages',[]))}")
-        # self.main_log.info("fetching google pay emails unread")
-        # google_pay_emails = service.users().messages().list(userId="me", q="in:inbox from:googlepay-noreply@google.com",
-        #                                 maxResults=1000000,labelIds=['UNREAD']).execute()
-        # self.main_log.info(f"google pay email count {len(google_pay_emails.get('messages',[]))}")
-        # self.google_pay_emails = google_pay_emails.get("messages",[])
-        # self.main_log.info("fetching zelle emails unread")
-        # zelle_emails = service.users().messages().list(userId="me", q="in:inbox from:customerservice@ealerts.bankofamerica.com",
-        #                                                     maxResults=1000000, labelIds=['UNREAD']).execute()
-        # self.main_log.info(f"zelle email count {len(zelle_emails.get('messages', []))}")
-        # self.zelle_emails = zelle_emails.get("messages", [])
+        self.main_log.info("fetching venmo emails unread")
+        venmo_email = service.users().messages().list(userId="me", q="from:venmo@venmo.com",
+                                                          maxResults=1000000,labelIds=['UNREAD']
+                                                          ).execute()
+        self.venmo_email = venmo_email.get("messages", [])
+
+        self.main_log.info("fetching cash app emails unread")
+        cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
+                                        labelIds=['UNREAD']).execute()
+        self.cash_app_emails = cash_app_emails.get("messages",[])
+        self.main_log.info(f"cash app email count {len(cash_app_emails.get('messages',[]))}")
+        self.main_log.info("fetching google pay emails unread")
+        google_pay_emails = service.users().messages().list(userId="me", q="in:inbox from:googlepay-noreply@google.com",
+                                        maxResults=1000000,labelIds=['UNREAD']).execute()
+        self.main_log.info(f"google pay email count {len(google_pay_emails.get('messages',[]))}")
+        self.google_pay_emails = google_pay_emails.get("messages",[])
+        self.main_log.info("fetching zelle emails unread")
+        zelle_emails = service.users().messages().list(userId="me", q="in:inbox from:customerservice@ealerts.bankofamerica.com",
+                                                            maxResults=1000000, labelIds=['UNREAD']).execute()
+        self.main_log.info(f"zelle email count {len(zelle_emails.get('messages', []))}")
+        self.zelle_emails = zelle_emails.get("messages", [])
 
     def filter_email(self,service):
         if self.helcim_email:
