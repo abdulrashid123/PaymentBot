@@ -76,49 +76,60 @@ class WhmcScrapper():
                 soup = BeautifulSoup(self.driver.page_source,'html.parser')
                 error = soup.find("p",text="Error: Invalid invoice id provided")
                 invoice_paid = soup.find("span",text="Invoice in Paid Status")
-                if not error and not invoice_paid:
-                    ne = False
-                    trans_ele = self.driver.find_element_by_name("transid")
-                    money_ele = self.driver.find_element_by_name("amount")
-                    amount_text = self.driver.find_element_by_name("amount").text
-                    if amount_text:
-                        try:
-                            amount = float(amount_text)
-                            print(amount,money)
-                            if amount != float(money):
-                                ne = True
-                                params = self.get_params()
-                                service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-                        except Exception as e:
-                            print(e)
+                if not error:
+                    try:
+                        self.main_log.info("Invoice not paid")
+                        ne = False
+                        trans_ele = self.driver.find_element_by_name("transid")
+                        money_ele = self.driver.find_element_by_name("amount")
+                        amount_text = self.driver.find_element_by_name("amount").text
+                        if amount_text:
+                            try:
+                                amount = float(amount_text)
+                                print(amount,money)
+                                if amount != float(money):
+                                    ne = True
+                                    params = self.get_params()
+                                    service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                            except Exception as e:
+                                print(e)
 
-                    trans_ele.clear()
-                    money_ele.clear()
-                    if transaction_id:
-                        trans_ele.send_keys(transaction_id)
-                    money_ele.send_keys(money)
-                    button = self.driver.find_element_by_id("paymentText")
-                    self.driver.execute_script("arguments[0].click()",button)
-                    success = self.driver.find_elements_by_class_name("textred")
-                    time.sleep(3)
-                    print(success,ne)
-                    if success and not ne:
-                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
-                        self.report.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
-                        params = self.UNREAD_PARAMS
-                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-
-                else:
-                    if invoice_paid:
-                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
-                        self.report.info(f"Invoice already paid")
-                        params = self.UNREAD_PARAMS
-                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-                    else:
-                        service.users().messages().modify(userId='me', id=messageId, body=params).execute()
-                        self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                        trans_ele.clear()
+                        money_ele.clear()
+                        if transaction_id:
+                            trans_ele.send_keys(transaction_id)
+                        money_ele.send_keys(money)
+                        button = self.driver.find_element_by_id("paymentText")
+                        self.driver.execute_script("arguments[0].click()",button)
+                        success = self.driver.find_elements_by_class_name("textred")
+                        time.sleep(3)
+                        if success and not ne:
+                            self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                            self.report.info(f"found {invoiceId} {messageId} {transaction_id} adding to READ")
+                            params = self.UNREAD_PARAMS
+                            service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                        else:
+                            self.main_log.info(f"Invoice Already Paid {invoiceId}")
+                            params = self.get_params()
+                            service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                    except Exception as e:
+                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                        self.main_log.error(f"Error Found for above invoice {str(e)}")
                         params = self.get_params()
                         service.users().messages().modify(userId='me', id=messageId, body=params).execute()
+                else:
+                    if error:
+                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                        self.main_log.error("Error Found for above invoice not found")
+                    if invoice_paid:
+                        self.main_log.info(f"found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                        self.report.info(f"Invoice already paid")
+
+                    else:
+
+                        self.main_log.info(f"Not found {invoiceId} {messageId} {transaction_id} adding to unable to find")
+                    params = self.get_params()
+                    service.users().messages().modify(userId='me', id=messageId, body=params).execute()
             except Exception as e:
                 print(e)
         if self.driver:

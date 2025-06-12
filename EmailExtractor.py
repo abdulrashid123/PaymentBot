@@ -66,7 +66,6 @@ class Extractor(WhmcScrapper):
                                                           maxResults=1000000,labelIds=['UNREAD']
                                                           ).execute()
         self.venmo_email = venmo_email.get("messages", [])
-
         self.main_log.info("fetching cash app emails unread")
         cash_app_emails = service.users().messages().list(userId="me", q="in:inbox from:cash@square.com",maxResults=1000000,
                                         labelIds=['UNREAD']).execute()
